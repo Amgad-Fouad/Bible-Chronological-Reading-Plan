@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="خطة القراءة">
+<meta name="theme-color" content="#0D1A40">
+<title>خطة القراءة التسلسلية</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--safe-top:env(safe-area-inset-top);--safe-bot:env(safe-area-inset-bottom)}
+body{font-family:'Cairo',sans-serif;background:#F2F2F7;color:#1C1C1E;
+     padding-top:var(--safe-top);padding-bottom:var(--safe-bot);min-height:100dvh}
+
+/* ── Views ── */
+.view{display:none;min-height:100dvh;flex-direction:column}
+.view.active{display:flex}
+
+/* ── Home header ── */
+.home-hdr{background:#0D1A40;color:#fff;padding:16px 20px 20px;
+           padding-top:calc(var(--safe-top) + 16px)}
+.home-hdr h1{font-size:20px;font-weight:700;color:#D4AA30}
+.home-hdr .subtitle{font-size:13px;color:rgba(255,255,255,.6);margin-top:3px}
+.overall-bar{margin-top:14px;background:rgba(255,255,255,.15);border-radius:99px;height:6px}
+.overall-fill{height:6px;border-radius:99px;background:#D4AA30;transition:width .4s}
+.overall-txt{display:flex;justify-content:space-between;margin-top:6px;
+              font-size:12px;color:rgba(255,255,255,.7)}
+
+/* ── Month grid ── */
+.months-grid{padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1}
+.month-card{background:#fff;border-radius:16px;overflow:hidden;
+             box-shadow:0 2px 8px rgba(0,0,0,.08);cursor:pointer;
+             transition:transform .15s,box-shadow .15s;active:scale(.97)}
+.month-card:active{transform:scale(.97)}
+.mc-top{padding:14px 14px 10px;color:#fff}
+.mc-name{font-size:15px;font-weight:700;line-height:1.3}
+.mc-range{font-size:11px;opacity:.75;margin-top:2px}
+.mc-body{padding:10px 14px 14px}
+.mc-prog-bar{background:#E8E8ED;border-radius:99px;height:4px;margin-bottom:6px}
+.mc-prog-fill{height:4px;border-radius:99px;transition:width .4s}
+.mc-count{font-size:12px;color:#8E8E93}
+.mc-done{font-weight:700}
+
+/* ── Month view header ── */
+.month-hdr{color:#fff;padding:16px 20px 18px;
+            padding-top:calc(var(--safe-top) + 16px);
+            display:flex;align-items:center;gap:12px;flex-shrink:0}
+.back-btn{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.2);
+           display:flex;align-items:center;justify-content:center;
+           font-size:18px;cursor:pointer;flex-shrink:0;border:none;color:#fff}
+.back-btn:active{background:rgba(255,255,255,.35)}
+.mh-info{flex:1}
+.mh-name{font-size:18px;font-weight:700}
+.mh-prog{font-size:12px;opacity:.75;margin-top:2px}
+
+/* ── Days list ── */
+.days-list{flex:1;overflow-y:auto;padding:12px 16px;
+            padding-bottom:calc(var(--safe-bot) + 12px)}
+.day-row{display:flex;align-items:center;background:#fff;
+          border-radius:12px;margin-bottom:8px;padding:14px 16px;
+          box-shadow:0 1px 4px rgba(0,0,0,.06);gap:12px;cursor:pointer}
+.day-row:active{opacity:.75}
+.day-row.done{background:#F9F9F9}
+.day-num{font-size:14px;font-weight:700;min-width:30px;text-align:right;flex-shrink:0}
+.day-rd{flex:1;font-size:15px;line-height:1.4}
+.day-row.done .day-rd{color:#8E8E93;text-decoration:line-through;text-decoration-color:rgba(0,0,0,.2)}
+.day-cb{width:24px;height:24px;border-radius:50%;border:2px solid #C7C7CC;
+         flex-shrink:0;display:flex;align-items:center;justify-content:center;
+         transition:all .2s;background:#fff}
+.day-row.done .day-cb{border-color:transparent;color:#fff}
+.day-cb svg{width:14px;height:14px;display:none}
+.day-row.done .day-cb svg{display:block}
+</style>
+</head>
+<body>
+
+<!-- HOME VIEW -->
+<div id="home-view" class="view active">
+  <div class="home-hdr">
+    <h1>خطة القراءة التسلسلية</h1>
+    <div class="subtitle">للكتاب المقدس كاملاً · ٣٦٥ يوماً</div>
+    <div class="overall-bar"><div class="overall-fill" id="overall-fill" style="width:0%"></div></div>
+    <div class="overall-txt">
+      <span id="overall-txt-l">التقدم الكلي</span>
+      <span id="overall-txt-r">٠ / ٣٦٥</span>
+    </div>
+  </div>
+  <div class="months-grid" id="months-grid"></div>
+</div>
+
+<!-- MONTH VIEW -->
+<div id="month-view" class="view">
+  <div class="month-hdr" id="month-hdr">
+    <button class="back-btn" onclick="showHome()">&#8250;</button>
+    <div class="mh-info">
+      <div class="mh-name" id="mh-name"></div>
+      <div class="mh-prog" id="mh-prog"></div>
+    </div>
+  </div>
+  <div class="days-list" id="days-list"></div>
+</div>
+
+<script>
+const DATA   = [[[1, "تكوين ١-٣"], [2, "تكوين ٤-٧"], [3, "تكوين ٨-١١"], [4, "أيوب ١-٥"], [5, "أيوب ٦-١٠"], [6, "أيوب ١١-١٥"], [7, "أيوب ١٦-٢٠"], [8, "أيوب ٢١-٢٥"], [9, "أيوب ٢٦-٣١"], [10, "أيوب ٣٢-٣٧"], [11, "أيوب ٣٨-٤٢"], [12, "تكوين ١٢-١٥"], [13, "تكوين ١٦-٢٠"], [14, "تكوين ٢١-٢٤"], [15, "تكوين ٢٥-٢٨"], [16, "تكوين ٢٩-٣٢"], [17, "تكوين ٣٣-٣٦"], [18, "تكوين ٣٧-٤٠"], [19, "تكوين ٤١-٤٤"], [20, "تكوين ٤٥-٤٨"], [21, "تكوين ٤٩-٥٠"], [22, "خروج ١-٣"], [23, "خروج ٤-٨"], [24, "خروج ٩-١٣"], [25, "خروج ١٤-١٨"], [26, "خروج ١٩-٢٣"], [27, "خروج ٢٤-٢٨"], [28, "خروج ٢٩-٣٤"], [29, "خروج ٣٥-٤٠"], [30, "لاويين ١-٥"], [31, "لاويين ٦-١٠"]], [[32, "خروج ١-٥"], [33, "خروج ٦-١٠"], [34, "خروج ١١-١٥"], [35, "خروج ١٦-٢٠"], [36, "خروج ٢١-٢٥"], [37, "خروج ٢٦-٣٠"], [38, "خروج ٣١-٣٥"], [39, "خروج ٣٦-٤٠"], [40, "لاويين ١-٤"], [41, "لاويين ٥-٩"], [42, "لاويين ١٠-١٤"], [43, "لاويين ١٥-١٩"], [44, "لاويين ٢٠-٢٣"], [45, "لاويين ٢٤-٢٧"], [46, "عدد ١-٥"], [47, "عدد ٦-١٠"], [48, "عدد ١١-١٥"], [49, "عدد ١٦-٢٠"], [50, "عدد ٢١-٢٥"], [51, "عدد ٢٦-٣٠"], [52, "عدد ٣١-٣٦"], [53, "تثنية ١-٤"], [54, "تثنية ٥-٩"], [55, "تثنية ١٠-١٤"], [56, "تثنية ١٥-١٩"], [57, "تثنية ٢٠-٢٤"], [58, "تثنية ٢٥-٢٩"], [59, "تثنية ٣٠-٣٤"], [60, "يشوع ١-٥"], [61, "يشوع ٦-١١"], [62, "يشوع ١٢-٢٤"]], [[63, "لاويين ٢٥-٢٧"], [64, "عدد ١-٤"], [65, "عدد ٥-٨"], [66, "عدد ٩-١٢"], [67, "عدد ١٣-١٦"], [68, "عدد ١٧-٢٠"], [69, "عدد ٢١-٢٤"], [70, "عدد ٢٥-٢٨"], [71, "عدد ٢٩-٣٢"], [72, "عدد ٣٣-٣٦"], [73, "تثنية ١-٣"], [74, "تثنية ٤-٧"], [75, "تثنية ٨-١١"], [76, "تثنية ١٢-١٦"], [77, "تثنية ١٧-٢١"], [78, "تثنية ٢٢-٢٦"], [79, "تثنية ٢٧-٣١"], [80, "تثنية ٣٢-٣٤"], [81, "يشوع ١-٤"], [82, "يشوع ٥-٨"], [83, "يشوع ٩-١٣"], [84, "يشوع ١٤-١٨"], [85, "يشوع ١٩-٢٤"], [86, "قضاة ١-٤"], [87, "قضاة ٥-٩"], [88, "قضاة ١٠-١٤"], [89, "قضاة ١٥-١٩"], [90, "قضاة ٢٠-٢١"], [91, "راعوث ١-٤"], [92, "١ صموئيل ١-٥"], [93, "١ صموئيل ٦-١٠"]], [[94, "١ صموئيل ١١-١٥"], [95, "١ صموئيل ١٦-٢٠"], [96, "١ صموئيل ٢١-٢٥"], [97, "١ صموئيل ٢٦-٣١"], [98, "٢ صموئيل ١-٥"], [99, "٢ صموئيل ٦-١٠"], [100, "٢ صموئيل ١١-١٥"], [101, "٢ صموئيل ١٦-٢٠"], [102, "٢ صموئيل ٢١-٢٤"], [103, "١ أخبار ١-٥"], [104, "١ أخبار ٦-١٠"], [105, "١ أخبار ١١-١٥"], [106, "١ أخبار ١٦-٢٠"], [107, "١ أخبار ٢١-٢٥"], [108, "١ أخبار ٢٦-٢٩"], [109, "٢ أخبار ١-٥"], [110, "٢ أخبار ٦-١٢"], [111, "٢ أخبار ١٣-٢٠"], [112, "٢ أخبار ٢١-٢٥"], [113, "٢ أخبار ٢٦-٣٢"], [114, "٢ أخبار ٣٣-٣٦"], [115, "مزمور ١-٥"], [116, "مزمور ٦-١٥"], [117, "مزمور ١٦-٢٥"], [118, "مزمور ٢٦-٣٥"], [119, "مزمور ٣٦-٤٥"], [120, "مزمور ٤٦-٥٥"], [121, "مزمور ٥٦-٦٥"], [122, "مزمور ٦٦-٧٥"], [123, "مزمور ١-١٠"], [124, "مزمور ١١-٢٠"]], [[125, "مزمور ٢١-٣٠"], [126, "مزمور ٣١-٤٠"], [127, "مزمور ٤١-٥٠"], [128, "مزمور ٥١-٦٠"], [129, "مزمور ٦١-٧٠"], [130, "مزمور ٧١-٨٠"], [131, "مزمور ٨١-٩٠"], [132, "مزمور ٩١-١٠٠"], [133, "مزمور ١٠١-١١٠"], [134, "مزمور ١١١-١٢٠"], [135, "مزمور ١٢١-١٣٠"], [136, "مزمور ١٣١-١٤٠"], [137, "مزمور ١٤١-١٥٠"], [138, "أمثال ١-٥"], [139, "أمثال ٦-١٠"], [140, "أمثال ١١-١٥"], [141, "أمثال ١٦-٢٠"], [142, "أمثال ٢١-٢٥"], [143, "أمثال ٢٦-٣١"], [144, "جامعة ١-٦"], [145, "جامعة ٧-١٢"], [146, "نشيد الأنشاد ١-٨"], [147, "١ ملوك ١-٣"], [148, "١ ملوك ٤-٧"], [149, "١ ملوك ٨-١١"], [150, "٢ أخبار ١-٩"], [151, "٢ أخبار ١٠-١٦"], [152, "٢ أخبار ١٧-٢٣"], [153, "٢ أخبار ٢٤-٣٠"], [154, "١ ملوك ١-٥"], [155, "١ ملوك ٦-١٠"]], [[156, "١ ملوك ١١-١٥"], [157, "١ ملوك ١٦-٢٠"], [158, "١ ملوك ٢١-٢٢"], [159, "٢ ملوك ١-٥"], [160, "٢ ملوك ٦-١٠"], [161, "٢ ملوك ١١-١٥"], [162, "٢ ملوك ١٦-٢٠"], [163, "إشعياء ١-٥"], [164, "إشعياء ٦-١٠"], [165, "إشعياء ١١-١٥"], [166, "إشعياء ١٦-٢٠"], [167, "إشعياء ٢١-٢٥"], [168, "إشعياء ٢٦-٣٠"], [169, "إشعياء ٣١-٣٥"], [170, "إشعياء ٣٦-٤٠"], [171, "إشعياء ٤١-٤٥"], [172, "إشعياء ٤٦-٥٠"], [173, "إشعياء ٥١-٥٥"], [174, "إشعياء ٥٦-٦٠"], [175, "إشعياء ٦١-٦٦"], [176, "ميخا ١-٧"], [177, "هوشع ١-٥"], [178, "هوشع ٦-١٠"], [179, "هوشع ١١-١٤"], [180, "عاموس ١-٥"], [181, "عاموس ٦-٩"], [182, "إشعياء ١-٥ (تكرار)"], [183, "إشعياء ٦-١٠"], [184, "٢ ملوك ٢١-٢٥"], [185, "إرميا ١-٥"]], [[186, "إرميا ٦-١٠"], [187, "إرميا ١١-١٥"], [188, "إرميا ١٦-٢٠"], [189, "إرميا ٢١-٢٥"], [190, "إرميا ٢٦-٣٠"], [191, "حزقيال ١٢-١٦"], [192, "حزقيال ١٧-٢١"], [193, "حزقيال ٢٤-٢٨"], [194, "حزقيال ٢٩-٣٣"], [195, "حزقيال ٣٤-٣٨"], [196, "حزقيال ٣٩-٤٣"], [197, "حزقيال ٤٤-٤٨"], [198, "دانيال ٤-٦"], [199, "دانيال ١٠-١٢"], [200, "مزمور ١٤١-١٥٠"], [201, "مزمور ١-١٠"], [202, "مزمور ١١-٢٠"], [203, "مزمور ٢١-٣٠"], [204, "مزمور ٣١-٤٠"], [205, "مزمور ٤١-٥٠"], [206, "مزمور ٥١-٦٠"], [207, "مزمور ٦١-٧٠"], [208, "مزمور ٧١-٨٠"], [209, "مزمور ٨١-٩٠"], [210, "مزمور ٩١-١٠٠"], [211, "مزمور ١٠١-١١٠"], [212, "مزمور ١١١-١٢٠"], [213, "مزمور ١٢١-١٣٠"], [214, "مزمور ١٣١-١٤٠"], [215, "إرميا ٣١-٣٥"]], [[216, "إرميا ٣٦-٤٠"], [217, "إرميا ٤١-٤٥"], [218, "إرميا ٤٦-٥٠"], [219, "إرميا ٥١-٥٢"], [220, "حزقيال ١-٥"], [221, "حزقيال ٦-١١"], [222, "حزقيال ١٢-١٧"], [223, "حزقيال ١٨-٢٣"], [224, "حزقيال ٢٤-٢٩"], [225, "حزقيال ٣٠-٣٤"], [226, "حزقيال ٣٥-٣٩"], [227, "حزقيال ٤٠-٤٤"], [228, "دانيال ١-٣"], [229, "دانيال ٧-٩"], [230, "مزمور ١٣١-١٤٠"], [231, "مزمور ١٤١-١٥٠"], [232, "مزمور ١-٥"], [233, "مزمور ٦-١٠"], [234, "مزمور ١١-١٥"], [235, "مزمور ١٦-٢٠"], [236, "مزمور ٢١-٢٥"], [237, "مزمور ٢٦-٣٠"], [238, "مزمور ٣١-٣٥"], [239, "مزمور ٣٦-٤٠"], [240, "مزمور ٤١-٤٥"], [241, "مزمور ٤٦-٥٠"], [242, "مزمور ٥١-٥٥"], [243, "مزمور ٥٦-٦٠"], [244, "مزمور ٦١-٦٥"], [245, "مزمور ٦٦-٧٠"]], [[246, "حجي ١-٢"], [247, "زكريا ١-٥"], [248, "زكريا ٦-١٠"], [249, "زكريا ١١-١٤"], [250, "ملاخي ١-٤"], [251, "عزرا ١-٣"], [252, "عزرا ٤-٦"], [253, "نحميا ١-٤"], [254, "نحميا ٥-٨"], [255, "نحميا ٩-١٣"], [256, "إستير ١-٥"], [257, "إستير ٦-١٠"], [258, "مزمور ١٠١-١١٠"], [259, "مزمور ١١١-١٢٠"], [260, "مزمور ١٢١-١٣٠"], [261, "مزمور ١٣١-١٤٠"], [262, "مزمور ١٤١-١٥٠"], [263, "مزمور ١-١٠"], [264, "مزمور ١١-٢٠"], [265, "مزمور ٢١-٣٠"], [266, "مزمور ٣١-٤٠"], [267, "مزمور ٤١-٥٠"], [268, "مزمور ٥١-٦٠"], [269, "مزمور ٦١-٧٠"], [270, "مزمور ٧١-٨٠"], [271, "مزمور ٨١-٩٠"], [272, "مزمور ٩١-١٠٠"], [273, "مزمور ١٠١-١١٠"], [274, "متى ١ / لوقا ١"], [275, "متى ٢ / لوقا ٢"]], [[276, "متى ٣ / مرقس ١ / لوقا ٣"], [277, "متى ٤ / مرقس ١ / لوقا ٤"], [278, "متى ٨-٩"], [279, "متى ١٠"], [280, "متى ١١-١٢"], [281, "متى ١٣"], [282, "متى ١٤-١٥"], [283, "متى ١٦-١٨"], [284, "متى ١٩-٢٠"], [285, "متى ٢١-٢٢"], [286, "متى ٢٣-٢٥"], [287, "لوقا ٥-٦"], [288, "لوقا ٧-٨"], [289, "لوقا ٩-١٠"], [290, "لوقا ١١-١٢"], [291, "لوقا ١٣-١٤"], [292, "لوقا ١٥-١٧"], [293, "لوقا ١٨-١٩"], [294, "يوحنا ١-٣"], [295, "يوحنا ٤-٦"], [296, "يوحنا ٧-٩"], [297, "يوحنا ١٠-١٢"], [298, "يوحنا ١٣-١٥"], [299, "يوحنا ١٦-١٧"], [300, "يوحنا ١٨"], [301, "متى ٢٠-٢٢"], [302, "مرقس ٧-٨"], [303, "لوقا ١٩-٢١"], [304, "متى ٢٣-٢٤"], [305, "متى ٢٦ / مرقس ١٤"]], [[306, "متى ٢٧ / مرقس ١٥"], [307, "متى ٢٨ / مرقس ١٦"], [308, "لوقا ٢٣ / يوحنا ١٩"], [309, "لوقا ٢٤ / يوحنا ٢٠"], [310, "يوحنا ٢١"], [311, "أعمال ١-٣"], [312, "أعمال ٤-٦"], [313, "أعمال ٧-٩"], [314, "أعمال ١٠-١٢"], [315, "أعمال ١٣"], [316, "أعمال ١٤"], [317, "أعمال ١٥"], [318, "أعمال ١٦"], [319, "أعمال ١٧"], [320, "أعمال ١٨"], [321, "أعمال ١٩"], [322, "أعمال ٢٠"], [323, "أعمال ٢١"], [324, "أعمال ٢٢"], [325, "أعمال ٢٣"], [326, "أعمال ٢٤"], [327, "أعمال ٢٥"], [328, "أعمال ٢٦"], [329, "أعمال ٢٧"], [330, "أعمال ٢٨"], [331, "رومية ١-٣"], [332, "رومية ٤-٨"], [333, "رومية ٩-١٢"], [334, "رومية ١٣-١٦"], [335, "أعمال ١٣"]], [[336, "أعمال ١٣ / غلاطية ١-٢"], [337, "أعمال ١٤ / غلاطية ٣-٤"], [338, "أعمال ١٥ / غلاطية ٥-٦"], [339, "أعمال ١٦ / ١ تسالونيكي"], [340, "أعمال ١٧ / ٢ تسالونيكي"], [341, "أعمال ١٨ / كورنثوس ١-٤"], [342, "أعمال ١٨ / كورنثوس ٥-٨"], [343, "أعمال ١٨ / كورنثوس ٩-١٢"], [344, "أعمال ١٨ / كورنثوس ١٣-١٦"], [345, "أعمال ١٩ / أفسس ١-٣"], [346, "أعمال ١٩ / أفسس ٤-٦"], [347, "أعمال ٢٠ / فيلبي ١-٢"], [348, "أعمال ٢٠ / فيلبي ٣-٤"], [349, "أعمال ٢١ / كولوسي ١-٢"], [350, "أعمال ٢١ / كولوسي ٣-٤"], [351, "أعمال ٢٢ / ١ تيموثاوس"], [352, "أعمال ٢٣ / ٢ تيموثاوس"], [353, "أعمال ٢٤ / تيطس"], [354, "أعمال ٢٥ / فليمون"], [355, "أعمال ٢٦-٢٨"], [356, "عبرانيين ١-٥"], [357, "عبرانيين ٦-١٠"], [358, "عبرانيين ١١-١٣"], [359, "يعقوب ١-٥"], [360, "١ بطرس ١-٥"], [361, "٢ بطرس ١-٣"], [362, "١ يوحنا ١-٥"], [363, "٢ و ٣ يوحنا / يهوذا"], [364, "رؤيا ١-١١"], [365, "رؤيا ١٢-٢٢"]]];
+const NAMES  = ["الشهر الأول", "الشهر الثاني", "الشهر الثالث", "الشهر الرابع", "الشهر الخامس", "الشهر السادس", "الشهر السابع", "الشهر الثامن", "الشهر التاسع", "الشهر العاشر", "الشهر الحادي عشر", "الشهر الثاني عشر"];
+const COLORS = ["#B85428", "#1B5CAA", "#2A6B2A", "#6048A0", "#1A7878", "#883030", "#182E68", "#887818", "#382868", "#285A38", "#A82858", "#38286A"];
+
+// ── State ────────────────────────────────────────────────────────────────────
+let checked = new Set(JSON.parse(localStorage.getItem('checked') || '[]'));
+function save() { localStorage.setItem('checked', JSON.stringify([...checked])); }
+
+function arn(n) {
+  return String(n).replace(/[0-9]/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
+}
+
+// ── Overall progress ─────────────────────────────────────────────────────────
+function updateOverall() {
+  const total = 365, done = checked.size;
+  const pct = (done/total*100).toFixed(1);
+  document.getElementById('overall-fill').style.width = pct + '%';
+  document.getElementById('overall-txt-r').textContent = arn(done) + ' / ٣٦٥';
+}
+
+// ── Month color helpers ───────────────────────────────────────────────────────
+function lighten(hex, f) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `rgb(${Math.round(r+(255-r)*f)},${Math.round(g+(255-g)*f)},${Math.round(b+(255-b)*f)})`;
+}
+
+// ── Render home ───────────────────────────────────────────────────────────────
+function renderHome() {
+  updateOverall();
+  const grid = document.getElementById('months-grid');
+  grid.innerHTML = '';
+  DATA.forEach((mdays, mi) => {
+    const color = COLORS[mi];
+    const done  = mdays.filter(([dn]) => checked.has(dn)).length;
+    const total = mdays.length;
+    const pct   = total ? (done/total*100).toFixed(0) : 0;
+    const fd = arn(mdays[0][0]), ld = arn(mdays[mdays.length-1][0]);
+    const card = document.createElement('div');
+    card.className = 'month-card';
+    card.innerHTML = `
+      <div class="mc-top" style="background:${color}">
+        <div class="mc-name">${NAMES[mi]}</div>
+        <div class="mc-range">الأيام ${fd}–${ld}</div>
+      </div>
+      <div class="mc-body">
+        <div class="mc-prog-bar">
+          <div class="mc-prog-fill" style="width:${pct}%;background:${color}"></div>
+        </div>
+        <div class="mc-count">
+          <span class="mc-done" style="color:${color}">${arn(done)}</span> / ${arn(total)} يوم
+        </div>
+      </div>`;
+    card.onclick = () => showMonth(mi);
+    grid.appendChild(card);
+  });
+}
+
+// ── Render month ──────────────────────────────────────────────────────────────
+let currentMonth = 0;
+function showMonth(mi) {
+  currentMonth = mi;
+  const color = COLORS[mi];
+  document.getElementById('month-hdr').style.background = color;
+  document.getElementById('mh-name').textContent = NAMES[mi];
+  renderDays(mi);
+  document.getElementById('home-view').classList.remove('active');
+  document.getElementById('month-view').classList.add('active');
+  document.getElementById('days-list').scrollTop = 0;
+}
+
+function renderDays(mi) {
+  const mdays = DATA[mi];
+  const color  = COLORS[mi];
+  const done   = mdays.filter(([dn]) => checked.has(dn)).length;
+  document.getElementById('mh-prog').textContent =
+    arn(done) + ' / ' + arn(mdays.length) + ' — ' + arn(Math.round(done/mdays.length*100)) + '%';
+
+  const list = document.getElementById('days-list');
+  list.innerHTML = '';
+  mdays.forEach(([dn, rd]) => {
+    const isDone = checked.has(dn);
+    const row = document.createElement('div');
+    row.className = 'day-row' + (isDone ? ' done' : '');
+    row.innerHTML = `
+      <div class="day-num" style="color:${color}">${arn(dn)}</div>
+      <div class="day-rd">${rd}</div>
+      <div class="day-cb" style="${isDone ? `background:${color}` : ''}">
+        <svg viewBox="0 0 14 14" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="2,7 5.5,11 12,3"/>
+        </svg>
+      </div>`;
+    row.onclick = () => toggleDay(dn, mi);
+    list.appendChild(row);
+  });
+}
+
+function toggleDay(dn, mi) {
+  if (checked.has(dn)) checked.delete(dn); else checked.add(dn);
+  save();
+  renderDays(mi);
+  updateOverall();
+  // Refresh home cards in background
+  renderHome();
+}
+
+function showHome() {
+  document.getElementById('month-view').classList.remove('active');
+  document.getElementById('home-view').classList.add('active');
+  renderHome();
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+renderHome();
+</script>
+</body>
+</html>
