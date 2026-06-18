@@ -267,11 +267,15 @@ function fitEnTitle() {
   const h1 = document.querySelector('.home-hdr h1');
   const en = document.querySelector('.home-hdr .en-title');
   if (!h1 || !en) return;
+  // Measure actual text width of Arabic h1
+  h1.style.display = 'inline-block';
   const target = h1.offsetWidth;
+  h1.style.display = '';
+  // Scale English text to match
   let size = 10;
   en.style.fontSize = size + 'px';
-  while (en.scrollWidth < target && size < 40) { size += 0.5; en.style.fontSize = size + 'px'; }
-  while (en.scrollWidth > target && size > 8)  { size -= 0.1; en.style.fontSize = size + 'px'; }
+  while (en.scrollWidth < target && size < 60) { size += 0.5; en.style.fontSize = size + 'px'; }
+  while (en.scrollWidth > target && size > 6)  { size -= 0.1; en.style.fontSize = size + 'px'; }
 }
 window.addEventListener('load', fitEnTitle);
 window.addEventListener('resize', fitEnTitle);
