@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="خطة القراءة">
+<meta name="theme-color" content="#0D1A40">
+<title>خطة القراءة اليومية</title>
+<link rel="apple-touch-icon" href="icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--safe-top:env(safe-area-inset-top);--safe-bot:env(safe-area-inset-bottom)}
+body{font-family:'Cairo',sans-serif;background:#F2F2F7;color:#1C1C1E;
+     padding-top:var(--safe-top);padding-bottom:var(--safe-bot);min-height:100dvh}
+.view{display:none;min-height:100dvh;flex-direction:column}
+.view.active{display:flex}
+/* ── Home header ── */
+.home-hdr{background:#0D1A40;color:#fff;padding:16px 20px 20px;
+           padding-top:calc(var(--safe-top) + 16px)}
+.home-hdr h1{font-size:20px;font-weight:700;color:#D4AA30}
+.home-hdr .subtitle{font-size:13px;color:rgba(255,255,255,.6);margin-top:3px}
+.home-hdr .en-title{font-size:13px;color:rgba(212,170,48,.65);margin-top:2px;font-weight:300;letter-spacing:.4px;direction:ltr;text-align:right;white-space:nowrap;display:inline-block}
+.overall-bar{margin-top:14px;background:rgba(255,255,255,.15);border-radius:99px;height:6px}
+.overall-fill{height:6px;border-radius:99px;background:#D4AA30;transition:width .4s}
+.overall-txt{display:flex;justify-content:space-between;margin-top:6px;
+              font-size:12px;color:rgba(255,255,255,.7)}
+/* ── Month grid ── */
+.months-grid{padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1}
+.month-card{background:#fff;border-radius:16px;overflow:hidden;
+             box-shadow:0 2px 8px rgba(0,0,0,.08);cursor:pointer;
+             transition:transform .15s,box-shadow .15s}
+.month-card:active{transform:scale(.97)}
+.mc-top{padding:14px 14px 10px;color:#fff}
+.mc-name{font-size:15px;font-weight:700;line-height:1.3}
+.mc-range{font-size:11px;opacity:.75;margin-top:2px}
+.mc-body{padding:10px 14px 14px}
+.mc-prog-bar{background:#E8E8ED;border-radius:99px;height:4px;margin-bottom:6px}
+.mc-prog-fill{height:4px;border-radius:99px;transition:width .4s}
+.mc-count{font-size:12px;color:#8E8E93}
+.mc-done{font-weight:700}
+/* ── Month view header ── */
+.month-hdr{color:#fff;padding:16px 20px 18px;
+            padding-top:calc(var(--safe-top) + 16px);
+            display:flex;align-items:center;gap:12px;flex-shrink:0}
+.back-btn{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.2);
+           display:flex;align-items:center;justify-content:center;
+           font-size:18px;cursor:pointer;flex-shrink:0;border:none;color:#fff}
+.back-btn:active{background:rgba(255,255,255,.35)}
+.mh-info{flex:1}
+.mh-name{font-size:18px;font-weight:700}
+.mh-prog{font-size:12px;opacity:.75;margin-top:2px}
+.mh-check{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.5);
+           display:flex;align-items:center;justify-content:center;
+           cursor:pointer;flex-shrink:0;transition:all .25s;background:transparent}
+.mh-check:active{opacity:.65}
+.mh-check svg{width:15px;height:15px;display:none}
+/* ── Days list ── */
+.days-list{flex:1;overflow-y:auto;padding:12px 16px;
+            padding-bottom:calc(var(--safe-bot) + 12px)}
+.day-row{display:flex;align-items:center;background:#fff;
+          border-radius:12px;margin-bottom:8px;padding:12px 16px;
+          box-shadow:0 1px 4px rgba(0,0,0,.06);gap:12px;cursor:pointer}
+.day-row:active{opacity:.75}
+.day-row.done{background:#F9F9F9}
+.day-num{font-size:13px;font-weight:700;min-width:28px;text-align:right;flex-shrink:0;line-height:1}
+.day-info{flex:1;display:flex;flex-direction:column;gap:2px}
+.day-date{font-size:12px;font-weight:600;opacity:.7}
+.day-rd{font-size:15px;line-height:1.4}
+.day-row.done .day-rd{color:#8E8E93;text-decoration:line-through;text-decoration-color:rgba(0,0,0,.2)}
+.day-row.done .day-date{color:#8E8E93}
+.day-cb{width:24px;height:24px;border-radius:50%;border:2px solid #C7C7CC;
+         flex-shrink:0;display:flex;align-items:center;justify-content:center;
+         transition:all .2s;background:#fff}
+.day-row.done .day-cb{border-color:transparent;color:#fff}
+.day-cb svg{width:14px;height:14px;display:none}
+.day-row.done .day-cb svg{display:block}
+</style>
+</head>
+<body>
+
+<!-- HOME VIEW -->
+<div id="home-view" class="view active">
+  <div class="home-hdr">
+    <h1>خطة القراءة اليومية</h1>
+    <div class="en-title">Daily Reading Plan</div>
+    <div class="subtitle">للكتاب المقدس كاملاً · ٣٦٥ يوماً</div>
+    <div class="overall-bar"><div class="overall-fill" id="overall-fill" style="width:0%"></div></div>
+    <div class="overall-txt">
+      <span id="overall-txt-l">التقدم الكلي</span>
+      <span id="overall-txt-r">٠ / ٣٦٥</span>
+    </div>
+  </div>
+  <div class="months-grid" id="months-grid"></div>
+</div>
+
+<!-- MONTH VIEW -->
+<div id="month-view" class="view">
+  <div class="month-hdr" id="month-hdr">
+    <button class="back-btn" onclick="showHome()">&#8250;</button>
+    <div class="mh-info">
+      <div class="mh-name" id="mh-name"></div>
+      <div class="mh-prog" id="mh-prog"></div>
+    </div>
+    <div class="mh-check" id="month-cb" onclick="toggleMonthDone()">
+      <svg viewBox="0 0 14 14" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="2,7 5.5,11 12,3"/>
+      </svg>
+    </div>
+  </div>
+  <div class="days-list" id="days-list"></div>
+</div>
+
+<script>
+const DATA   = [
+[[1,1,0,"تكوين ١-٣"],[2,2,0,"تكوين ٤-٧"],[3,3,0,"تكوين ٨-١١"],[4,4,0,"أيوب ١-٥"],[5,5,0,"أيوب ٦-١٠"],[6,6,0,"أيوب ١١-١٥"],[7,7,0,"أيوب ١٦-٢٠"],[8,8,0,"أيوب ٢١-٢٥"],[9,9,0,"أيوب ٢٦-٣١"],[10,10,0,"أيوب ٣٢-٣٧"],[11,11,0,"أيوب ٣٨-٤٢"],[12,12,0,"تكوين ١٢-١٥"],[13,13,0,"تكوين ١٦-٢٠"],[14,14,0,"تكوين ٢١-٢٤"],[15,15,0,"تكوين ٢٥-٢٨"],[16,16,0,"تكوين ٢٩-٣٢"],[17,17,0,"تكوين ٣٣-٣٦"],[18,18,0,"تكوين ٣٧-٤٠"],[19,19,0,"تكوين ٤١-٤٤"],[20,20,0,"تكوين ٤٥-٤٨"],[21,21,0,"تكوين ٤٩-٥٠"],[22,22,0,"خروج ١-٣"],[23,23,0,"خروج ٤-٨"],[24,24,0,"خروج ٩-١٣"],[25,25,0,"خروج ١٤-١٨"],[26,26,0,"خروج ١٩-٢٣"],[27,27,0,"خروج ٢٤-٢٨"],[28,28,0,"خروج ٢٩-٣٤"],[29,29,0,"خروج ٣٥-٤٠"],[30,30,0,"لاويين ١-٥"],[31,31,0,"لاويين ٦-١٠"]],
+[[32,1,1,"خروج ١-٥"],[33,2,1,"خروج ٦-١٠"],[34,3,1,"خروج ١١-١٥"],[35,4,1,"خروج ١٦-٢٠"],[36,5,1,"خروج ٢١-٢٥"],[37,6,1,"خروج ٢٦-٣٠"],[38,7,1,"خروج ٣١-٣٥"],[39,8,1,"خروج ٣٦-٤٠"],[40,9,1,"لاويين ١-٤"],[41,10,1,"لاويين ٥-٩"],[42,11,1,"لاويين ١٠-١٤"],[43,12,1,"لاويين ١٥-١٩"],[44,13,1,"لاويين ٢٠-٢٣"],[45,14,1,"لاويين ٢٤-٢٧"],[46,15,1,"عدد ١-٥"],[47,16,1,"عدد ٦-١٠"],[48,17,1,"عدد ١١-١٥"],[49,18,1,"عدد ١٦-٢٠"],[50,19,1,"عدد ٢١-٢٥"],[51,20,1,"عدد ٢٦-٣٠"],[52,21,1,"عدد ٣١-٣٦"],[53,22,1,"تثنية ١-٤"],[54,23,1,"تثنية ٥-٩"],[55,24,1,"تثنية ١٠-١٤"],[56,25,1,"تثنية ١٥-١٩"],[57,26,1,"تثنية ٢٠-٢٤"],[58,27,1,"تثنية ٢٥-٢٩"],[59,28,1,"تثنية ٣٠-٣٤"]],
+[[60,1,2,"يشوع ١-٥"],[61,2,2,"يشوع ٦-١١"],[62,3,2,"يشوع ١٢-٢٤"],[63,4,2,"لاويين ٢٥-٢٧"],[64,5,2,"عدد ١-٤"],[65,6,2,"عدد ٥-٨"],[66,7,2,"عدد ٩-١٢"],[67,8,2,"عدد ١٣-١٦"],[68,9,2,"عدد ١٧-٢٠"],[69,10,2,"عدد ٢١-٢٤"],[70,11,2,"عدد ٢٥-٢٨"],[71,12,2,"عدد ٢٩-٣٢"],[72,13,2,"عدد ٣٣-٣٦"],[73,14,2,"تثنية ١-٣"],[74,15,2,"تثنية ٤-٧"],[75,16,2,"تثنية ٨-١١"],[76,17,2,"تثنية ١٢-١٦"],[77,18,2,"تثنية ١٧-٢١"],[78,19,2,"تثنية ٢٢-٢٦"],[79,20,2,"تثنية ٢٧-٣١"],[80,21,2,"تثنية ٣٢-٣٤"],[81,22,2,"يشوع ١-٤"],[82,23,2,"يشوع ٥-٨"],[83,24,2,"يشوع ٩-١٣"],[84,25,2,"يشوع ١٤-١٨"],[85,26,2,"يشوع ١٩-٢٤"],[86,27,2,"قضاة ١-٤"],[87,28,2,"قضاة ٥-٩"],[88,29,2,"قضاة ١٠-١٤"],[89,30,2,"قضاة ١٥-١٩"],[90,31,2,"قضاة ٢٠-٢١"]],
+[[91,1,3,"راعوث ١-٤"],[92,2,3,"١ صموئيل ١-٥"],[93,3,3,"١ صموئيل ٦-١٠"],[94,4,3,"١ صموئيل ١١-١٥"],[95,5,3,"١ صموئيل ١٦-٢٠"],[96,6,3,"١ صموئيل ٢١-٢٥"],[97,7,3,"١ صموئيل ٢٦-٣١"],[98,8,3,"٢ صموئيل ١-٥"],[99,9,3,"٢ صموئيل ٦-١٠"],[100,10,3,"٢ صموئيل ١١-١٥"],[101,11,3,"٢ صموئيل ١٦-٢٠"],[102,12,3,"٢ صموئيل ٢١-٢٤"],[103,13,3,"١ أخبار ١-٥"],[104,14,3,"١ أخبار ٦-١٠"],[105,15,3,"١ أخبار ١١-١٥"],[106,16,3,"١ أخبار ١٦-٢٠"],[107,17,3,"١ أخبار ٢١-٢٥"],[108,18,3,"١ أخبار ٢٦-٢٩"],[109,19,3,"٢ أخبار ١-٥"],[110,20,3,"٢ أخبار ٦-١٢"],[111,21,3,"٢ أخبار ١٣-٢٠"],[112,22,3,"٢ أخبار ٢١-٢٥"],[113,23,3,"٢ أخبار ٢٦-٣٢"],[114,24,3,"٢ أخبار ٣٣-٣٦"],[115,25,3,"مزمور ١-٥"],[116,26,3,"مزمور ٦-١٥"],[117,27,3,"مزمور ١٦-٢٥"],[118,28,3,"مزمور ٢٦-٣٥"],[119,29,3,"مزمور ٣٦-٤٥"],[120,30,3,"مزمور ٤٦-٥٥"]],
+[[121,1,4,"مزمور ٥٦-٦٥"],[122,2,4,"مزمور ٦٦-٧٥"],[123,3,4,"مزمور ١-١٠"],[124,4,4,"مزمور ١١-٢٠"],[125,5,4,"مزمور ٢١-٣٠"],[126,6,4,"مزمور ٣١-٤٠"],[127,7,4,"مزمور ٤١-٥٠"],[128,8,4,"مزمور ٥١-٦٠"],[129,9,4,"مزمور ٦١-٧٠"],[130,10,4,"مزمور ٧١-٨٠"],[131,11,4,"مزمور ٨١-٩٠"],[132,12,4,"مزمور ٩١-١٠٠"],[133,13,4,"مزمور ١٠١-١١٠"],[134,14,4,"مزمور ١١١-١٢٠"],[135,15,4,"مزمور ١٢١-١٣٠"],[136,16,4,"مزمور ١٣١-١٤٠"],[137,17,4,"مزمور ١٤١-١٥٠"],[138,18,4,"أمثال ١-٥"],[139,19,4,"أمثال ٦-١٠"],[140,20,4,"أمثال ١١-١٥"],[141,21,4,"أمثال ١٦-٢٠"],[142,22,4,"أمثال ٢١-٢٥"],[143,23,4,"أمثال ٢٦-٣١"],[144,24,4,"جامعة ١-٦"],[145,25,4,"جامعة ٧-١٢"],[146,26,4,"نشيد الأنشاد ١-٨"],[147,27,4,"١ ملوك ١-٣"],[148,28,4,"١ ملوك ٤-٧"],[149,29,4,"١ ملوك ٨-١١"],[150,30,4,"٢ أخبار ١-٩"],[151,31,4,"٢ أخبار ١٠-١٦"]],
+[[152,1,5,"٢ أخبار ١٧-٢٣"],[153,2,5,"٢ أخبار ٢٤-٣٠"],[154,3,5,"١ ملوك ١-٥"],[155,4,5,"١ ملوك ٦-١٠"],[156,5,5,"١ ملوك ١١-١٥"],[157,6,5,"١ ملوك ١٦-٢٠"],[158,7,5,"١ ملوك ٢١-٢٢"],[159,8,5,"٢ ملوك ١-٥"],[160,9,5,"٢ ملوك ٦-١٠"],[161,10,5,"٢ ملوك ١١-١٥"],[162,11,5,"٢ ملوك ١٦-٢٠"],[163,12,5,"إشعياء ١-٥"],[164,13,5,"إشعياء ٦-١٠"],[165,14,5,"إشعياء ١١-١٥"],[166,15,5,"إشعياء ١٦-٢٠"],[167,16,5,"إشعياء ٢١-٢٥"],[168,17,5,"إشعياء ٢٦-٣٠"],[169,18,5,"إشعياء ٣١-٣٥"],[170,19,5,"إشعياء ٣٦-٤٠"],[171,20,5,"إشعياء ٤١-٤٥"],[172,21,5,"إشعياء ٤٦-٥٠"],[173,22,5,"إشعياء ٥١-٥٥"],[174,23,5,"إشعياء ٥٦-٦٠"],[175,24,5,"إشعياء ٦١-٦٦"],[176,25,5,"ميخا ١-٧"],[177,26,5,"هوشع ١-٥"],[178,27,5,"هوشع ٦-١٠"],[179,28,5,"هوشع ١١-١٤"],[180,29,5,"عاموس ١-٥"],[181,30,5,"عاموس ٦-٩"]],
+[[182,1,6,"إشعياء ١-٥ (تكرار)"],[183,2,6,"إشعياء ٦-١٠"],[184,3,6,"٢ ملوك ٢١-٢٥"],[185,4,6,"إرميا ١-٥"],[186,5,6,"إرميا ٦-١٠"],[187,6,6,"إرميا ١١-١٥"],[188,7,6,"إرميا ١٦-٢٠"],[189,8,6,"إرميا ٢١-٢٥"],[190,9,6,"إرميا ٢٦-٣٠"],[191,10,6,"حزقيال ١٢-١٦"],[192,11,6,"حزقيال ١٧-٢١"],[193,12,6,"حزقيال ٢٤-٢٨"],[194,13,6,"حزقيال ٢٩-٣٣"],[195,14,6,"حزقيال ٣٤-٣٨"],[196,15,6,"حزقيال ٣٩-٤٣"],[197,16,6,"حزقيال ٤٤-٤٨"],[198,17,6,"دانيال ٤-٦"],[199,18,6,"دانيال ١٠-١٢"],[200,19,6,"مزمور ١٤١-١٥٠"],[201,20,6,"مزمور ١-١٠"],[202,21,6,"مزمور ١١-٢٠"],[203,22,6,"مزمور ٢١-٣٠"],[204,23,6,"مزمور ٣١-٤٠"],[205,24,6,"مزمور ٤١-٥٠"],[206,25,6,"مزمور ٥١-٦٠"],[207,26,6,"مزمور ٦١-٧٠"],[208,27,6,"مزمور ٧١-٨٠"],[209,28,6,"مزمور ٨١-٩٠"],[210,29,6,"مزمور ٩١-١٠٠"],[211,30,6,"مزمور ١٠١-١١٠"],[212,31,6,"مزمور ١١١-١٢٠"]],
+[[213,1,7,"مزمور ١٢١-١٣٠"],[214,2,7,"مزمور ١٣١-١٤٠"],[215,3,7,"إرميا ٣١-٣٥"],[216,4,7,"إرميا ٣٦-٤٠"],[217,5,7,"إرميا ٤١-٤٥"],[218,6,7,"إرميا ٤٦-٥٠"],[219,7,7,"إرميا ٥١-٥٢"],[220,8,7,"حزقيال ١-٥"],[221,9,7,"حزقيال ٦-١١"],[222,10,7,"حزقيال ١٢-١٧"],[223,11,7,"حزقيال ١٨-٢٣"],[224,12,7,"حزقيال ٢٤-٢٩"],[225,13,7,"حزقيال ٣٠-٣٤"],[226,14,7,"حزقيال ٣٥-٣٩"],[227,15,7,"حزقيال ٤٠-٤٤"],[228,16,7,"دانيال ١-٣"],[229,17,7,"دانيال ٧-٩"],[230,18,7,"مزمور ١٣١-١٤٠"],[231,19,7,"مزمور ١٤١-١٥٠"],[232,20,7,"مزمور ١-٥"],[233,21,7,"مزمور ٦-١٠"],[234,22,7,"مزمور ١١-١٥"],[235,23,7,"مزمور ١٦-٢٠"],[236,24,7,"مزمور ٢١-٢٥"],[237,25,7,"مزمور ٢٦-٣٠"],[238,26,7,"مزمور ٣١-٣٥"],[239,27,7,"مزمور ٣٦-٤٠"],[240,28,7,"مزمور ٤١-٤٥"],[241,29,7,"مزمور ٤٦-٥٠"],[242,30,7,"مزمور ٥١-٥٥"],[243,31,7,"مزمور ٥٦-٦٠"]],
+[[244,1,8,"مزمور ٦١-٦٥"],[245,2,8,"مزمور ٦٦-٧٠"],[246,3,8,"حجي ١-٢"],[247,4,8,"زكريا ١-٥"],[248,5,8,"زكريا ٦-١٠"],[249,6,8,"زكريا ١١-١٤"],[250,7,8,"ملاخي ١-٤"],[251,8,8,"عزرا ١-٣"],[252,9,8,"عزرا ٤-٦"],[253,10,8,"نحميا ١-٤"],[254,11,8,"نحميا ٥-٨"],[255,12,8,"نحميا ٩-١٣"],[256,13,8,"إستير ١-٥"],[257,14,8,"إستير ٦-١٠"],[258,15,8,"مزمور ١٠١-١١٠"],[259,16,8,"مزمور ١١١-١٢٠"],[260,17,8,"مزمور ١٢١-١٣٠"],[261,18,8,"مزمور ١٣١-١٤٠"],[262,19,8,"مزمور ١٤١-١٥٠"],[263,20,8,"مزمور ١-١٠"],[264,21,8,"مزمور ١١-٢٠"],[265,22,8,"مزمور ٢١-٣٠"],[266,23,8,"مزمور ٣١-٤٠"],[267,24,8,"مزمور ٤١-٥٠"],[268,25,8,"مزمور ٥١-٦٠"],[269,26,8,"مزمور ٦١-٧٠"],[270,27,8,"مزمور ٧١-٨٠"],[271,28,8,"مزمور ٨١-٩٠"],[272,29,8,"مزمور ٩١-١٠٠"],[273,30,8,"مزمور ١٠١-١١٠"]],
+[[274,1,9,"متى ١ / لوقا ١"],[275,2,9,"متى ٢ / لوقا ٢"],[276,3,9,"متى ٣ / مرقس ١ / لوقا ٣"],[277,4,9,"متى ٤ / مرقس ١ / لوقا ٤"],[278,5,9,"متى ٨-٩"],[279,6,9,"متى ١٠"],[280,7,9,"متى ١١-١٢"],[281,8,9,"متى ١٣"],[282,9,9,"متى ١٤-١٥"],[283,10,9,"متى ١٦-١٨"],[284,11,9,"متى ١٩-٢٠"],[285,12,9,"متى ٢١-٢٢"],[286,13,9,"متى ٢٣-٢٥"],[287,14,9,"لوقا ٥-٦"],[288,15,9,"لوقا ٧-٨"],[289,16,9,"لوقا ٩-١٠"],[290,17,9,"لوقا ١١-١٢"],[291,18,9,"لوقا ١٣-١٤"],[292,19,9,"لوقا ١٥-١٧"],[293,20,9,"لوقا ١٨-١٩"],[294,21,9,"يوحنا ١-٣"],[295,22,9,"يوحنا ٤-٦"],[296,23,9,"يوحنا ٧-٩"],[297,24,9,"يوحنا ١٠-١٢"],[298,25,9,"يوحنا ١٣-١٥"],[299,26,9,"يوحنا ١٦-١٧"],[300,27,9,"يوحنا ١٨"],[301,28,9,"متى ٢٠-٢٢"],[302,29,9,"مرقس ٧-٨"],[303,30,9,"لوقا ١٩-٢١"],[304,31,9,"متى ٢٣-٢٤"]],
+[[305,1,10,"متى ٢٦ / مرقس ١٤"],[306,2,10,"متى ٢٧ / مرقس ١٥"],[307,3,10,"متى ٢٨ / مرقس ١٦"],[308,4,10,"لوقا ٢٣ / يوحنا ١٩"],[309,5,10,"لوقا ٢٤ / يوحنا ٢٠"],[310,6,10,"يوحنا ٢١"],[311,7,10,"أعمال ١-٣"],[312,8,10,"أعمال ٤-٦"],[313,9,10,"أعمال ٧-٩"],[314,10,10,"أعمال ١٠-١٢"],[315,11,10,"أعمال ١٣"],[316,12,10,"أعمال ١٤"],[317,13,10,"أعمال ١٥"],[318,14,10,"أعمال ١٦"],[319,15,10,"أعمال ١٧"],[320,16,10,"أعمال ١٨"],[321,17,10,"أعمال ١٩"],[322,18,10,"أعمال ٢٠"],[323,19,10,"أعمال ٢١"],[324,20,10,"أعمال ٢٢"],[325,21,10,"أعمال ٢٣"],[326,22,10,"أعمال ٢٤"],[327,23,10,"أعمال ٢٥"],[328,24,10,"أعمال ٢٦"],[329,25,10,"أعمال ٢٧"],[330,26,10,"أعمال ٢٨"],[331,27,10,"رومية ١-٣"],[332,28,10,"رومية ٤-٨"],[333,29,10,"رومية ٩-١٢"],[334,30,10,"رومية ١٣-١٦"]],
+[[335,1,11,"أعمال ١٣"],[336,2,11,"أعمال ١٣ / غلاطية ١-٢"],[337,3,11,"أعمال ١٤ / غلاطية ٣-٤"],[338,4,11,"أعمال ١٥ / غلاطية ٥-٦"],[339,5,11,"أعمال ١٦ / ١ تسالونيكي"],[340,6,11,"أعمال ١٧ / ٢ تسالونيكي"],[341,7,11,"أعمال ١٨ / كورنثوس ١-٤"],[342,8,11,"أعمال ١٨ / كورنثوس ٥-٨"],[343,9,11,"أعمال ١٨ / كورنثوس ٩-١٢"],[344,10,11,"أعمال ١٨ / كورنثوس ١٣-١٦"],[345,11,11,"أعمال ١٩ / أفسس ١-٣"],[346,12,11,"أعمال ١٩ / أفسس ٤-٦"],[347,13,11,"أعمال ٢٠ / فيلبي ١-٢"],[348,14,11,"أعمال ٢٠ / فيلبي ٣-٤"],[349,15,11,"أعمال ٢١ / كولوسي ١-٢"],[350,16,11,"أعمال ٢١ / كولوسي ٣-٤"],[351,17,11,"أعمال ٢٢ / ١ تيموثاوس"],[352,18,11,"أعمال ٢٣ / ٢ تيموثاوس"],[353,19,11,"أعمال ٢٤ / تيطس"],[354,20,11,"أعمال ٢٥ / فليمون"],[355,21,11,"أعمال ٢٦-٢٨"],[356,22,11,"عبرانيين ١-٥"],[357,23,11,"عبرانيين ٦-١٠"],[358,24,11,"عبرانيين ١١-١٣"],[359,25,11,"يعقوب ١-٥"],[360,26,11,"١ بطرس ١-٥"],[361,27,11,"٢ بطرس ١-٣"],[362,28,11,"١ يوحنا ١-٥"],[363,29,11,"٢ و ٣ يوحنا / يهوذا"],[364,30,11,"رؤيا ١-١١"],[365,31,11,"رؤيا ١٢-٢٢"]]
+];
+const NAMES  = ["يناير", "فبراير", "مارس", "إبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+const COLORS = ["#B85428", "#1B5CAA", "#2A6B2A", "#6048A0", "#1A7878", "#883030", "#182E68", "#887818", "#382868", "#285A38", "#A82858", "#38286A"];
+
+let checked = new Set(JSON.parse(localStorage.getItem('checked_daily') || '[]'));
+function save() { localStorage.setItem('checked_daily', JSON.stringify([...checked])); }
+
+function arn(n) {
+  return String(n).replace(/[0-9]/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
+}
+
+function updateOverall() {
+  const total = 365, done = checked.size;
+  const pct = (done/total*100).toFixed(1);
+  document.getElementById('overall-fill').style.width = pct + '%';
+  document.getElementById('overall-txt-r').textContent = arn(done) + ' / ٣٦٥';
+}
+
+function lighten(hex, f) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `rgb(${Math.round(r+(255-r)*f)},${Math.round(g+(255-g)*f)},${Math.round(b+(255-b)*f)})`;
+}
+
+function renderHome() {
+  updateOverall();
+  const grid = document.getElementById('months-grid');
+  grid.innerHTML = '';
+  DATA.forEach((mdays, mi) => {
+    const color = COLORS[mi];
+    const done  = mdays.filter(([dn]) => checked.has(dn)).length;
+    const total = mdays.length;
+    const pct   = total ? (done/total*100).toFixed(0) : 0;
+    const firstDay = mdays[0][1], lastDay = mdays[mdays.length-1][1];
+    const card = document.createElement('div');
+    card.className = 'month-card';
+    card.innerHTML = `
+      <div class="mc-top" style="background:${color}">
+        <div class="mc-name">${NAMES[mi]}</div>
+        <div class="mc-range">${arn(firstDay)} – ${arn(lastDay)} ${NAMES[mi]}</div>
+      </div>
+      <div class="mc-body">
+        <div class="mc-prog-bar">
+          <div class="mc-prog-fill" style="width:${pct}%;background:${color}"></div>
+        </div>
+        <div class="mc-count">
+          <span class="mc-done" style="color:${color}">${arn(done)}</span> / ${arn(total)} يوم
+        </div>
+      </div>`;
+    card.onclick = () => showMonth(mi);
+    grid.appendChild(card);
+  });
+}
+
+let currentMonth = 0;
+function showMonth(mi) {
+  currentMonth = mi;
+  const color = COLORS[mi];
+  document.getElementById('month-hdr').style.background = color;
+  document.getElementById('mh-name').textContent = NAMES[mi];
+  renderDays(mi);
+  updateMonthCheckbox();
+  document.getElementById('home-view').classList.remove('active');
+  document.getElementById('month-view').classList.add('active');
+  document.getElementById('days-list').scrollTop = 0;
+}
+
+function renderDays(mi) {
+  const mdays = DATA[mi];
+  const color  = COLORS[mi];
+  const done   = mdays.filter(([dn]) => checked.has(dn)).length;
+  document.getElementById('mh-prog').textContent =
+    arn(done) + ' / ' + arn(mdays.length) + ' — ' + arn(Math.round(done/mdays.length*100)) + '%';
+  const list = document.getElementById('days-list');
+  list.innerHTML = '';
+  mdays.forEach(([dn, dayOfMonth, monthIdx, rd]) => {
+    const isDone = checked.has(dn);
+    const dateStr = arn(dayOfMonth) + ' ' + NAMES[monthIdx];
+    const row = document.createElement('div');
+    row.className = 'day-row' + (isDone ? ' done' : '');
+    row.innerHTML = `
+      <div class="day-num" style="color:${color}">${arn(dn)}</div>
+      <div class="day-info">
+        <div class="day-date">${dateStr}</div>
+        <div class="day-rd">${rd}</div>
+      </div>
+      <div class="day-cb" style="${isDone ? `background:${color}` : ''}">
+        <svg viewBox="0 0 14 14" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="2,7 5.5,11 12,3"/>
+        </svg>
+      </div>`;
+    row.onclick = () => toggleDay(dn, mi);
+    list.appendChild(row);
+  });
+}
+
+function toggleDay(dn, mi) {
+  if (checked.has(dn)) checked.delete(dn); else checked.add(dn);
+  save();
+  renderDays(mi);
+  updateOverall();
+  updateMonthCheckbox();
+  renderHome();
+}
+
+function toggleMonthDone() {
+  const mdays = DATA[currentMonth];
+  const allDone = mdays.every(([dn]) => checked.has(dn));
+  if (allDone) { mdays.forEach(([dn]) => checked.delete(dn)); }
+  else { mdays.forEach(([dn]) => checked.add(dn)); }
+  save();
+  renderDays(currentMonth);
+  updateOverall();
+  updateMonthCheckbox();
+  renderHome();
+}
+
+function updateMonthCheckbox() {
+  const cb = document.getElementById('month-cb');
+  if (!cb) return;
+  const mdays = DATA[currentMonth];
+  const allDone = mdays.every(([dn]) => checked.has(dn));
+  const color = COLORS[currentMonth];
+  const svg = cb.querySelector('svg');
+  if (allDone) {
+    cb.style.background = 'rgba(255,255,255,.9)';
+    cb.style.borderColor = 'transparent';
+    svg.style.display = 'block';
+    svg.setAttribute('stroke', color);
+  } else {
+    cb.style.background = 'transparent';
+    cb.style.borderColor = 'rgba(255,255,255,.5)';
+    svg.style.display = 'none';
+  }
+}
+
+function showHome() {
+  document.getElementById('month-view').classList.remove('active');
+  document.getElementById('home-view').classList.add('active');
+  renderHome();
+}
+
+renderHome();
+
+function fitEnTitle() {
+  const h1 = document.querySelector('.home-hdr h1');
+  const en = document.querySelector('.home-hdr .en-title');
+  if (!h1 || !en) return;
+  h1.style.display = 'inline-block';
+  const target = h1.offsetWidth;
+  h1.style.display = '';
+  let size = 10;
+  en.style.fontSize = size + 'px';
+  while (en.scrollWidth < target && size < 60) { size += 0.5; en.style.fontSize = size + 'px'; }
+  while (en.scrollWidth > target && size > 6)  { size -= 0.1; en.style.fontSize = size + 'px'; }
+}
+window.addEventListener('load', fitEnTitle);
+window.addEventListener('resize', fitEnTitle);
+</script>
+</body>
+</html>
